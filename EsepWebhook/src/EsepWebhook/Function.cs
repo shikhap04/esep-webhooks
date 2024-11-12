@@ -1,6 +1,7 @@
 using System.Text;
 using Amazon.Lambda.Core;
 using Newtonsoft.Json;
+
 // Assembly attribute to enable the Lambda function's JSON input to be converted into a .NET class.
 [assembly: LambdaSerializer(typeof(Amazon.Lambda.Serialization.SystemTextJson.DefaultLambdaJsonSerializer))]
 
@@ -10,16 +11,17 @@ public class Function
 {
     
     /// <summary>
-    /// A simple function that takes a string and does a ToUpper
+    /// A simple function that takes an object and creates a slack message.
     /// </summary>
     /// <param name="input">The event for the Lambda function handler to process.</param>
     /// <param name="context">The ILambdaContext that provides methods for logging and describing the Lambda environment.</param>
     /// <returns></returns>
-    public string FunctionHandler(string input, ILambdaContext context)
+    public string FunctionHandler(object input, ILambdaContext context)
     {
         dynamic json = JsonConvert.DeserializeObject<dynamic>(input.ToString());
-        string payload = $"{{'text':'Issue Created: {json.issue.html_url}'}}";
-        
+        string issueUrl = json.body != null ? json.body.issue.html_url : json.issue.html_url;
+        string payload = $"{{'text':'Issue Created: {issueUrl}'}}";
+                
         var client = new HttpClient();
         var webRequest = new HttpRequestMessage(HttpMethod.Post, Environment.GetEnvironmentVariable("SLACK_URL"))
         {
